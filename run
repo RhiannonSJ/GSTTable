@@ -1,0 +1,4 @@
+{
+gROOT->ProcessLine(".L function_defs.cpp+");
+gROOT->ProcessLine(".L table.cpp+");
+}
