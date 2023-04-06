@@ -9,6 +9,10 @@ You will need a text file with the format
     
     <label for table> <path/to/gst/file>
 
+For example
+
+    Nieves2020 /sbnd/data/.../file.txt
+
 With 1 line per input file. If a single file is passed the statistical uncertainty will be written as well.
 
 ## Run
