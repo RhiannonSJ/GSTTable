@@ -81,7 +81,7 @@ void FSINumbers( TTree *event_tree,
 // Make a table to compare the number of different final state particles
 // and interactions in each model configuration
 // -------------------------------------------------------------------------
-void MakeTable( const std::vector<std::string> &model_names,
+void MakeTable( const vector<string> &model_names,
                 const m_outer &n_cc_vect,
                 const m_outer &n_nc_vect,
                 const m_outer &n_nue_vect,
@@ -141,5 +141,18 @@ void RecoNuE( TTree *event_tree,
               vector< double > &MC_reco_E_NC );
 
 // -------------------------------------------------------------------------
+// Filling a section of the table
+// -------------------------------------------------------------------------
+void FillTableSection(const string &label,
+                      const int &n_interactions,
+                      const int &n_columns,
+                      const vector<string> &interactions,
+                      const vector<string> &mod_names,
+                      const m_outer &rates,
+                      ostream &ofile );
+
+
+// -------------------------------------------------------------------------
+
 
 #endif

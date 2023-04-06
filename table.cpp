@@ -12,7 +12,7 @@
 
 #include "function_defs.h"
 
-void table(const std::string &fileList, const int &det=0, const std::string &outputFile="outputTable.tex") {
+void table(const std::string &fileList, const int &det=0, const std::string &outputFile="outputTable.tex", const bool avg=false) {
     
   // -------------------------------------------------------------------------
   //        Loop over fileList and calculate everything to fill table
@@ -64,7 +64,7 @@ void table(const std::string &fileList, const int &det=0, const std::string &out
     double pot   = gst->GetWeight();
     avg_pot     += pot;
   }
-  avg_pot /= static_cast<double>(modelNames.size());
+  if(avg) avg_pot /= static_cast<double>(modelNames.size());
 
   // Now fill the relevant quantities for the table
   for(unsigned int i = 0; i < modelNames.size(); ++i){
@@ -108,7 +108,6 @@ void table(const std::string &fileList, const int &det=0, const std::string &out
 
   CCFHS.push_back( "Inclusive" );
   CCFHS.push_back( "\\hspace{.3cm} 0$ \\pi$ + X" );
-
   CCFHS.push_back( "\\hspace{.6cm} 0$ \\pi $ 0p" );
   CCFHS.push_back( "\\hspace{.6cm} 0$ \\pi $ 1p" );
   CCFHS.push_back( "\\hspace{.6cm} 0$ \\pi $ 1p ($ > $ 20 MeV) " );
@@ -122,24 +121,25 @@ void table(const std::string &fileList, const int &det=0, const std::string &out
   CCFHS.push_back( "\\hspace{.6cm} 0$ \\pi > $ 3p" );
   CCFHS.push_back( "\\hspace{.6cm} 0$ \\pi > $ 3p ($ > $ 20 MeV) " );
   CCFHS.push_back( "\\hspace{.6cm} 0$ \\pi > $ 3p ($ > $ 50 MeV) " );    
-
   CCFHS.push_back( "\\hspace{.3cm} 1$ \\pi^+ $ + X" );
   CCFHS.push_back( "\\hspace{.3cm} 1$ \\pi^- $ + X" );
   CCFHS.push_back( "\\hspace{.3cm} 1$ \\pi^0 $ + X" );
   CCFHS.push_back( "\\hspace{.3cm} 2$ \\pi $ + X" );
-  CCFHS.push_back( "\\hspace{.3cm} > 1 \\mu + X" );
   CCFHS.push_back( "\\hspace{.3cm} $ \\geqslant 3 \\pi $ + X" );
-  CCFHS.push_back( "\\hspace{.3cm} $ K^{+} K^{-} $ + X" );
-  CCFHS.push_back( "\\hspace{.3cm} $ K^{0} \\bar{K}^{0} $ + X" );
-  CCFHS.push_back( "\\hspace{.3cm} $ \\Sigma^{++}_{c} $ + X" );
-  CCFHS.push_back( "\\hspace{.3cm} $ \\Sigma^{+}_{c} $ + X" );
-  CCFHS.push_back( "\\hspace{.3cm} $ \\Lambda^{+}_{c} $ + X" );
+  CCFHS.push_back( "\\hspace{.3cm} $ > 1 \\mu $ + X" );
+  //CCFHS.push_back( "\\hspace{.3cm} $ D^{\\pm}, D^{0} $ (+ X)" );
+  CCFHS.push_back( "\\hspace{.3cm} $ K^{\\pm}, K^{0} $ (+ X)" );
+  CCFHS.push_back( "\\hspace{.3cm} $ K^{+} K^{-}, K^{0} \\bar{K}^{0} $ (+ X)" );
+  CCFHS.push_back( "\\hspace{.3cm} $ \\Sigma^{\\pm}, \\Sigma^{0}, \\Lambda^{0} $ (+ X)" );
+  CCFHS.push_back( "\\hspace{.3cm} $ \\Lambda^{0} $" );
+  CCFHS.push_back( "\\hspace{.3cm} $ \\Sigma^{0}, \\Sigma^{\\pm} $" );
+  CCFHS.push_back( "\\hspace{.3cm} $ \\Sigma^{++}_{c}, \\Sigma^{+}_{c}, \\Lambda^{+}_{c} $ (+ X)" );
 
   NCFHS.push_back( "Inclusive" );
   NCFHS.push_back( "\\hspace{.3cm} 0$ \\pi $" );
   NCFHS.push_back( "\\hspace{.3cm} 1$ \\pi^{\\pm} $ + X" );
   NCFHS.push_back( "\\hspace{.3cm}  $ \\geqslant 2 \\pi^{\\pm} $ + X" );
-  //NCFHS.push_back( " $ \\geqslant 1 \\pi^0 $ + X" );
+  NCFHS.push_back( "\\hspace{.3cm}  $ \\geqslant 1 \\pi^0 $ + X" );
   
   NUEFHS.push_back( "Inclusive" );
 

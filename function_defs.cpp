@@ -16,10 +16,12 @@ using namespace std;
 //                      Normalisation function
 // -------------------------------------------------------------------------
 double Norm(const int nEvents, const double nPOT, const int det){
-  if(det == 0 || det == 2)
-    return (6.6e20/nPOT)*nEvents;
-  else if(det == 3)
+  if(det == 0)
+    return (10e20/nPOT)*nEvents;
+  else if(det == 1)
     return (13.2e20/nPOT)*nEvents;
+  else if(det == 2)
+    return (15e20/nPOT)*nEvents;
   else{
     cerr << " Error: Unknown detector enumeration, " << det 
       << "\n Options are:"
@@ -128,6 +130,7 @@ void FSINumbers( TTree *event_tree,
   // Set the branch addresses for these leaves
   int n;
   int neu;
+  int nuance;
   bool cc;
   bool nc;
   bool res;
@@ -147,6 +150,7 @@ void FSINumbers( TTree *event_tree,
   int pdgf[1000];
   double en[1000];
 
+  event_tree->SetBranchAddress("nuance_code",    &nuance);
   event_tree->SetBranchAddress("pdgf",    &pdgf);
   event_tree->SetBranchAddress("Ef",      &en);
   event_tree->SetBranchAddress("nf",      &n);
@@ -189,13 +193,18 @@ void FSINumbers( TTree *event_tree,
   int ncc1pi0    = 0;
   int ncc2pi     = 0;
   int ncc3pi     = 0;
-  int nmu        = 0;
   int nck        = 0;
   int nnk        = 0;
   int nsigpp     = 0;
   int nsigp      = 0;
   int nlamp      = 0;
+  int ndmesons   = 0;
   int nmoremu    = 0;
+  int nsinglek   = 0;
+  int nchbaryons = 0;
+  int nhyperons  = 0;
+  int nlamonly   = 0;
+  int nsigonly   = 0;
 
   int ncccoh     = 0;
   int nccres     = 0;
@@ -237,6 +246,7 @@ void FSINumbers( TTree *event_tree,
 
     int n_p_50 = 0;
     int n_p_20 = 0;
+    int nmu    = 0;
 
     // CC Inclusive
     if (cc){
@@ -322,10 +332,16 @@ void FSINumbers( TTree *event_tree,
         if (k0 == 2)
           ++nnk;
 
+        // CC single kaon production
+        if(kp + km + k0 == 1)
+          nsinglek++;
+
         // For charm CCQE 
         int sigmapp_count = 0;
         int sigmap_count  = 0;
         int lambda_count  = 0;
+        int lamonly_count = 0;
+        int sigonly_count = 0;
 
         // For charm DIS
         int d_count = 0;
@@ -344,21 +360,54 @@ void FSINumbers( TTree *event_tree,
             ++lambda_count;
 
           // D
-          else if (pdg == 411 || pdg == 421)
+          else if (abs(pdg) == 411 || pdg == 421)
             ++d_count;
         }
 
         // CC Sigma++
-        if (sigmapp_count >= 1)
+        if (sigmapp_count == 1)
           ++nsigpp;
 
         // CC Sigma+
-        if (sigmap_count >= 1)
+        if (sigmap_count == 1)
           ++nsigp;
 
         // CC Lambda+
-        if (lambda_count >= 1)
+        if (lambda_count == 1){
           ++nlamp;
+        }
+
+        if(d_count >= 1)
+          ++ndmesons;
+
+        // Hyperon production 
+        int sigmapm0_count = 0;
+        int lambda0_count  = 0;
+        
+        for (int j = 0; j < n; ++j){
+          int pdg  = pdgf[j];
+          // sigma +/-
+          if (pdg == 3222 || pdg == 3112 || pdg == 3212){
+            ++sigmapm0_count;
+            if(((kp + km + k0) == 0))
+              ++sigonly_count;
+          }
+
+          // lambda 0
+          else if (pdg == 3122){
+            ++lambda0_count;
+            if(((kp + km + k0) == 0))
+              ++lamonly_count;
+          }
+        }
+
+        // CC hyperon
+        if(sigmapm0_count > 0 || lambda0_count > 0)
+          nhyperons++;
+        if(lamonly_count == 1)
+          nlamonly++;
+        if(sigonly_count == 1)
+          nsigonly++;
 
       } // numu
       else if(abs(neu) == 12)
@@ -435,6 +484,7 @@ void FSINumbers( TTree *event_tree,
         ++nncotherpr;
     } // nc
   }
+  nchbaryons = nsigpp+nsigp+nlamp;
 
   // Now fill the map with the values
   // Do this in such a way that the key can be printed straight into a table
@@ -459,11 +509,13 @@ void FSINumbers( TTree *event_tree,
   n_cc_fsi.push_back ( TMath::Floor( norm * ncc2pi) );
   n_cc_fsi.push_back ( TMath::Floor( norm * ncc3pi) );
   n_cc_fsi.push_back ( TMath::Floor( norm * nmoremu) );
-  n_cc_fsi.push_back ( TMath::Floor( norm * nck) );
-  n_cc_fsi.push_back ( TMath::Floor( norm * nnk) );
-  n_cc_fsi.push_back ( TMath::Floor( norm * nsigpp) );
-  n_cc_fsi.push_back ( TMath::Floor( norm * nsigp) );
-  n_cc_fsi.push_back ( TMath::Floor( norm * nlamp) );
+  //n_cc_fsi.push_back ( TMath::Floor( norm * ndmesons) );
+  n_cc_fsi.push_back ( TMath::Floor( norm * nsinglek) );
+  n_cc_fsi.push_back ( TMath::Floor( norm * (nck+nnk)) );
+  n_cc_fsi.push_back ( TMath::Floor( norm * nhyperons) );
+  n_cc_fsi.push_back ( TMath::Floor( norm * nlamonly) );
+  n_cc_fsi.push_back ( TMath::Floor( norm * nsigonly) );
+  n_cc_fsi.push_back ( TMath::Floor( norm * nchbaryons) );
 
   n_cc_proc.push_back ( TMath::Floor( norm * nccqel) );
   n_cc_proc.push_back ( TMath::Floor( norm * nccmec) );
@@ -485,7 +537,7 @@ void FSINumbers( TTree *event_tree,
   n_nc_fsi.push_back ( TMath::Floor( norm * nnc0pi) );
   n_nc_fsi.push_back ( TMath::Floor( norm * nnc1pipm) );
   n_nc_fsi.push_back ( TMath::Floor( norm * nncg2pipm) );
-  //n_nc_fsi.push_back ( TMath::Floor( norm * nncg1pi0) );
+  n_nc_fsi.push_back ( TMath::Floor( norm * nncg1pi0) );
   //
   n_nue_fsi.push_back( TMath::Floor( norm * nnue) );
 
@@ -494,7 +546,7 @@ void FSINumbers( TTree *event_tree,
 // -------------------------------------------------------------------------
 //                      Make final state tables
 // -------------------------------------------------------------------------
-void MakeTable( const std::vector<std::string> &model_names,
+void MakeTable( const vector<string> &model_names,
                 const m_outer &n_cc_vect,
                 const m_outer &n_nc_vect,
                 const m_outer &n_nue_vect,
@@ -512,7 +564,7 @@ void MakeTable( const std::vector<std::string> &model_names,
 
   // Make a table from an input map - of - maps to print nice things
   // Number of columns and rows to be made
-  int n_models, n_ccinteractions, n_ncinteractions, n_nueinteractions, n_ccprocesses, n_ncprocesses;
+  int n_models, n_ccinteractions, n_ncinteractions, n_nueinteractions, n_ccprocesses, n_ncprocesses, n_cols;
 
   n_models          = model_names.size();
   n_ccinteractions  = ccinteractions.size();
@@ -520,124 +572,52 @@ void MakeTable( const std::vector<std::string> &model_names,
   n_nueinteractions = nueinteractions.size();
   n_ccprocesses     = ccprocesses.size();
   n_ncprocesses     = ncprocesses.size();
+
+  // If we are only looking at a single model, add a column with the statistical uncertainty
+  if(n_models == 1) n_cols = 2;
+  else n_cols = n_models;
+
                     
   // Begin the tabular environment in the LaTeX output file for n_predictions columns
-  file << "\\begin{longtable}{ m{4cm} * {" << n_models << "}{ >{\\centering\\arraybackslash}m{2.8cm} } }" << endl;
+  file << "\\begin{longtable}{ m{4cm} * {" << n_cols << "}{ >{\\centering\\arraybackslash}m{2.8cm} } }" << endl;
   file << "\\hline" << endl;
 
   // Fill the first line with "Configurations" for all the right-hand columns
-  file << " \\multirow{2}{*}{\\textbf{ Hadronic Final State }} & \\multicolumn{ " << n_models << " }{ c }{ \\textbf{ Model Configurations (CC~QE \\& CC~2p2h) } } \\\\" << endl;
+  file << " \\multirow{2}{*}{\\textbf{ Hadronic Final State }} & \\multicolumn{ " << n_cols << " }{ c }{ \\textbf{ Model Configurations } } \\\\" << endl;
 
 
   // Fill a line of the table with the prediction names
   file << " & " ;
-  for( int i = 0; i < n_models-1; ++i ){
+  for( int i = 0; i < n_cols-1; ++i ){
     file << " \\textbf{ " << model_names.at(i) << " } & ";
   }
-  file << " \\textbf{ " << model_names.at(n_models-1) << " } \\\\" << endl;
+  if(n_cols != n_models) // Then we want the statistical uncertainty as the final column
+    file << " \\textbf{ Stat. Err. } \\\\" << endl;
+  else
+    file << " \\textbf{ " << model_names.at(n_models-1) << " } \\\\" << endl;
+
   file << " \\hline " << endl;
 
   // -------------------------------------------------------------------
   //      Loop over the outer maps and fill the rest of the table                                   
   // -------------------------------------------------------------------
-
-  file << " \\multicolumn{ " << n_models + 1 << " }{  c  }{ $\\nu_{\\mu}$ \\textit{ Charged Current } } \\\\ " << endl;
+  FillTableSection("$\\nu_{\\mu}$ \\textit{ Charged Current }", n_ccinteractions, n_cols, ccinteractions, model_names, n_cc_vect, file);
   file << " \\hdashline " << endl;
-
-  for( int i = 0; i < n_ccinteractions; ++i ){
-
-    file << ccinteractions[i] << " & ";
-
-    for(int n = 0; n < n_models - 1; ++n){
-      std::string m = model_names.at(n);
-
-      file << std::fixed << setprecision(0) <<  "\\num{ " << n_cc_vect.at(m).at(i) << "} & ";
-    }
-    std::string m = model_names.at(n_models-1);
-    file << std::fixed << setprecision(0) << "\\num{ " <<  n_cc_vect.at(m).at(i) << "} \\\\ " << endl;
-  } 
-
-
+  FillTableSection("$\\nu_{\\mu}$ \\textit{ Neutral Current }", n_ncinteractions, n_cols, ncinteractions, model_names, n_nc_vect, file);
   file << " \\hdashline " << endl;
-  file << " \\multicolumn{ " << n_models + 1 << " }{  c  }{ $\\nu_{\\mu}$ \\textit{ Neutral Current } } \\\\ " << endl;
-  file << " \\hdashline " << endl;
-
-  for( int i = 0; i < n_ncinteractions; ++i ){
-
-    file << ncinteractions[i] << " & ";
-
-    for(int n = 0; n < n_models - 1; ++n){
-      std::string m = model_names.at(n);
-
-      file << std::fixed << setprecision(0) << "\\num{ " << n_nc_vect.at(m).at(i) << "} & ";
-    }
-    std::string m = model_names.at(n_models-1);
-    file << std::fixed << setprecision(0) << "\\num{ " << n_nc_vect.at(m).at(i) << "} \\\\ " << endl;
-
-  }
-  
-  file << " \\hdashline " << endl;
-  file << " \\multicolumn{ " << n_models + 1 << " }{  c  }{ $\\nu_{e}$ } \\\\ " << endl;
-  file << " \\hdashline " << endl;
-
-  for( int i = 0; i < n_nueinteractions; ++i ){
-
-    file << nueinteractions[i] << " & ";
-
-    for(int n = 0; n < n_models - 1; ++n){
-      std::string m = model_names.at(n);
-
-      file << std::fixed << setprecision(0) << "\\num{ " << n_nue_vect.at(m).at(i) << "} & ";
-    }
-    std::string m = model_names.at(n_models-1);
-    file << std::fixed << setprecision(0) << "\\num{ " << n_nue_vect.at(m).at(i) << "} \\\\ " << endl;
-
-  }
-
+  FillTableSection("$\\nu_{e}$", n_nueinteractions, n_cols, nueinteractions, model_names, n_nue_vect, file);
 
   file << " \\hline " << endl;
-
   file << " \\textbf{Physical Process } &" << endl;
-
-  for ( int i = 0; i < n_models - 1; ++i ){
+  for ( int i = 0; i < n_cols - 1; ++i ){
     file << " & " << endl;
   }
   file << " \\\\ " << endl;
-
   file << " \\hline " << endl;
 
-  file << " \\multicolumn{ " << n_models + 1 << " }{  c  }{ \\textit{ Charged Current } } \\\\ " << endl;
+  FillTableSection("\\textit{ Charged Current }", n_ccprocesses, n_cols, ccprocesses, model_names, n_cc_proc_vect, file);
   file << " \\hdashline " << endl;
-
-  for( int i = 0; i < n_ccprocesses; ++i ){
-
-    file << ccprocesses[i] << " & ";
-
-    for(int n = 0; n < n_models - 1; ++n){
-      std::string m = model_names.at(n);
-
-      file << std::fixed << setprecision(0) << "\\num{ " << n_cc_proc_vect.at(m).at(i) << "} & ";
-    }
-    std::string m = model_names.at(n_models-1);
-    file << std::fixed << setprecision(0) << "\\num{ " << n_cc_proc_vect.at(m).at(i) << "} \\\\ " << endl;
-  } 
-
-  file << " \\hdashline " << endl;
-  file << " \\multicolumn{ " << n_models + 1 << " }{  c  }{ \\textit{ Neutral Current } } \\\\ " << endl;
-  file << " \\hdashline " << endl;
-
-  for( int i = 0; i < n_ncprocesses; ++i ){
-
-    file << ncprocesses[i] << " & ";
-
-    for(int n = 0; n < n_models - 1; ++n){
-      std::string m = model_names.at(n);
-
-      file << std::fixed << setprecision(0) << "\\num{ " << n_nc_proc_vect.at(m).at(i) << "} & ";
-    }
-    std::string m = model_names.at(n_models-1);
-    file << std::fixed << setprecision(0) << "\\num{ " << n_nc_proc_vect.at(m).at(i) << "} \\\\ " << endl;
-  } 
+  FillTableSection("\\textit{ Neutral Current }", n_ncprocesses, n_cols, ncprocesses, model_names, n_nc_proc_vect, file);
 
   file << " \\hline " << endl;
 
@@ -953,5 +933,41 @@ void RecoNuE( TTree *event_tree,
 
     }
   }
+}
+// -------------------------------------------------------------------------
+//                    Filling a table section
+// -------------------------------------------------------------------------
+void FillTableSection(const string &label,
+                      const int &n_interactions,
+                      const int &n_columns,
+                      const vector<string> &interactions,
+                      const vector<string> &mod_names,
+                      const m_outer &rates,
+                      ostream &ofile){
+
+  ofile << " \\multicolumn{ " << n_columns + 1 << " }{  c  }{ " << label << " } \\\\ " << endl;
+  ofile << " \\hdashline " << endl;
+
+  const int n_mods = mod_names.size();
+  for( int i = 0; i < n_interactions; ++i ){
+
+    ofile << interactions.at(i) << " & ";
+
+    for(int n = 0; n < n_columns - 1; ++n){
+      std::string m = mod_names.at(n);
+
+      ofile << std::fixed << setprecision(0) <<  "\\num{ " << rates.at(m).at(i) << "} & ";
+    }
+    if(n_columns != n_mods){
+      std::string m = mod_names.at(0);
+      float stat_err = 100./static_cast<float>(std::sqrt(rates.at(m).at(i)));
+      ofile << std::fixed << setprecision(2) << stat_err << "\\% \\\\ " << endl;
+    }
+    else{
+      std::string m = mod_names.at(n_mods-1);
+      ofile << std::fixed << setprecision(0) << "\\num{ " <<  rates.at(m).at(i) << "} \\\\ " << endl;
+    }
+  } 
+
 }
 void function_defs(){}
